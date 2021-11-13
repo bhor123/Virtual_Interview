@@ -17,17 +17,25 @@ let upload = multer({storage, limits: { filesize: 1000000 * 10 }}).single('testf
 
 router.route('/kyc').post((req, res) => {
     upload(req, res, async err => {
+        console.log(req.body);
+        const geoL = {town: req.body.town, country: req.body.country, lat: req.body.lat, long: req.body.long, postcode: req.body.postcode};
+        console.log(geoL)
+
         if(err) return res.status(500).send({error: err.message, test: "testing"})
-        var user = await User.findByIdAndUpdate("618d2ebd469164877c6c9cbd", {path: req.file.path})
-        ress.json({file: `${process.env.APP_BASE_URL}/files/${uuid}`})
-        console.log(user+" ")
+        var user = await User.findByIdAndUpdate("618d2ebd469164877c6c9cbd", {path: req.file.path, location : geoL});
+
+        res.json({file: `${process.env.APP_BASE_URL}/files/}`});
     })
 })
 
 router.route('/file-upload').post((req, res) => {
     upload(req, res, err => {
-        if(err) return res.status(500).send({error: err.message, test: "testing"})
-        
+        if(err)
+        {
+            console.error(err);
+            return res.status(500).send({error: err.message, test: "testing"})
+        }
+        console.log("File is - ", req.file.path);
         res.json({filename: req.file.path});
     })
 })
@@ -37,9 +45,22 @@ router.route('/download').get((req, res) => {
     res.download(req.query.path, 'user-file.txt');
 })
 
-router.route('/kyc-update').post(async (req, res) => {
+router.route('/kyc-update').get(async (req, res) => {
     var user = await User.findByIdAndUpdate("618d2ebd469164877c6c9cbd", {path: req.query.path})
     res.json({file: `${process.env.APP_BASE_URL}/files/sfsf`, message: "kyc updated"})
+})
+
+router.route('/fetch-kyc').get(async (req, res) => {
+    const user = await User.findById("618d2ebd469164877c6c9cbd");
+    // res.sendFile('./' + user.path);
+    res.json({file: `${process.env.APP_BASE_URL}/files/${user.path}`, message: "kyc fetched"});
+})
+
+router.route('/get-location').get(async (req, res) => {
+    const user = await User.findById("618d2ebd469164877c6c9cbd");
+    console.log("kyc loc maangra", user);
+    // res.sendFile('./' + user.path);
+    res.json({location: user.location, message: "location fetched"});
 })
 
 router.route('/add').post(async (req, res) => {

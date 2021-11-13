@@ -7,12 +7,13 @@ const io = require('socket.io')(server, {
 const {v4 : uuidV4} = require('uuid');  // Using method v4 as uuidV4
 const multer = require('multer');
 const cors = require('cors');
+const path = require('path');
 
 const connectDB = require('./config/db')
 connectDB();
 
 app.use(cors());
-app.use(express.static('build'));
+app.use('/files/uploads', express.static(path.join(__dirname, '/uploads')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -49,6 +50,16 @@ io.on('connection', socket => {
        socket.on('file-uploaded', filename => {
            console.log("File uploaded called", filename);
            socket.broadcast.to(roomId).emit('file-received', filename);
+       });
+
+       socket.on('request-location', () => {
+           console.log("Loc dedo bhaiya");
+           socket.broadcast.to(roomId).emit('fetch-location');
+       });
+
+       socket.on('sending-location', (userLoc) => {
+           console.log("Loc lelo bhaiya", userLoc);
+           socket.broadcast.to(roomId).emit('receive-location', userLoc);
        });
 
        socket.on('disconnect', () => {  // called when someone leaves the room
